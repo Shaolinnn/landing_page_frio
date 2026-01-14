@@ -69,9 +69,10 @@ export default function HomePage() {
 
   const openModal = () => setIsModalOpen(true);
 
-  // Lógica de Delay para Público Frio (SINCRONIZADA COM O TEMPO DO VÍDEO)
+    // Lógica de Delay para Público Frio (SINCRONIZADA COM O TEMPO DO VÍDEO)
   useEffect(() => {
-    const STORAGE_KEY = 'daq_vsl_frio_unlocked';
+    const PLAYER_ELEMENT_ID = 'vid-6967733435a1be1be44d18e8';
+    const STORAGE_KEY = `daq_vsl_frio_unlocked_${PLAYER_ELEMENT_ID}_${DELAY_IN_SECONDS}`;
 
     // Se já desbloqueou antes, mostra direto (mesma regra, sem frustração no refresh)
     try {
@@ -84,63 +85,125 @@ export default function HomePage() {
       // ignore
     }
 
-    let attempts = 0;
     let disposed = false;
+    let cleanup: (() => void) | null = null;
 
-    const startWatchVideoProgress = () => {
+    const unlock = () => {
       if (disposed) return;
 
-      const sp = window.smartplayer;
+      setShowContent(true);
 
-      // Aguarda o player inicializar
-      if (!sp || !sp.instances || sp.instances.length === 0) {
-        if (attempts >= 90) return; // tenta por até ~90s
-        attempts += 1;
-        window.setTimeout(startWatchVideoProgress, 1000);
+      try {
+        localStorage.setItem(STORAGE_KEY, 'true');
+      } catch {
+        // ignore
+      }
+
+      // Para de escutar assim que liberar
+      try {
+        cleanup?.();
+      } catch {
+        // ignore
+      } finally {
+        cleanup = null;
+      }
+    };
+
+    const getVideoEl = (): HTMLVideoElement | null => {
+      const host = document.getElementById(PLAYER_ELEMENT_ID);
+      if (!host) return null;
+
+      // VTurb é um Web Component: normalmente o <video> fica no shadowRoot
+      const shadowVideo = (host as HTMLElement & { shadowRoot?: ShadowRoot | null }).shadowRoot?.querySelector(
+        'video'
+      ) as HTMLVideoElement | null;
+      if (shadowVideo) return shadowVideo;
+
+      // Fallback (caso o <video> esteja no light DOM)
+      const lightVideo = (host as HTMLElement).querySelector('video') as HTMLVideoElement | null;
+      if (lightVideo) return lightVideo;
+
+      return null;
+    };
+
+    const getCurrentTimeFromSmartplayer = (): number | null => {
+      const sp = window.smartplayer;
+      if (!sp?.instances?.length) return null;
+
+      let maxTime: number | null = null;
+      for (const inst of sp.instances) {
+        const t = inst?.video?.currentTime;
+        if (typeof t === 'number' && !Number.isNaN(t)) {
+          if (maxTime === null || t > maxTime) maxTime = t;
+        }
+      }
+      return maxTime;
+    };
+
+    const startTracking = () => {
+      if (disposed) return;
+
+      // 1) Preferência: lê o tempo diretamente do <video> real (mais confiável que smartplayer.on)
+      const video = getVideoEl();
+      if (video) {
+        const check = () => {
+          if (disposed) return;
+          const t = video.currentTime ?? 0;
+          if (t >= DELAY_IN_SECONDS) unlock();
+        };
+
+        const onTimeUpdate = () => check();
+
+        video.addEventListener('timeupdate', onTimeUpdate);
+
+        // Fallback: alguns browsers/players podem "throttlar" o timeupdate
+        const interval = window.setInterval(check, 1000);
+
+        // Checa já (caso o vídeo já esteja tocando quando anexar)
+        check();
+
+        cleanup = () => {
+          video.removeEventListener('timeupdate', onTimeUpdate);
+          window.clearInterval(interval);
+        };
+
         return;
       }
 
-      const instance = sp.instances[0];
+      // 2) Fallback: se não achou o <video>, lê pelo smartplayer (polling)
+      const spTime = getCurrentTimeFromSmartplayer();
+      if (spTime !== null) {
+        const interval = window.setInterval(() => {
+          if (disposed) return;
+          const t = getCurrentTimeFromSmartplayer() ?? 0;
+          if (t >= DELAY_IN_SECONDS) unlock();
+        }, 1000);
 
-      const onTimeUpdate = () => {
-        if (disposed) return;
+        cleanup = () => {
+          window.clearInterval(interval);
+        };
 
-        // Evita liberar em autoplay inteligente (mantém lógica consistente com embed VTurb)
-        if (instance?.smartAutoPlay) return;
-
-        const currentTime = instance?.video?.currentTime ?? 0;
-        if (currentTime < DELAY_IN_SECONDS) return;
-
-        setShowContent(true);
-
-        try {
-          localStorage.setItem(STORAGE_KEY, 'true');
-        } catch {
-          // ignore
-        }
-
-        // Remove listener (se a lib suportar off)
-        try {
-          if (typeof instance?.off === 'function') {
-            instance.off('timeupdate', onTimeUpdate);
-          }
-        } catch {
-          // ignore
-        }
-      };
-
-      // Listener do tempo do vídeo
-      if (typeof instance?.on === 'function') {
-        instance.on('timeupdate', onTimeUpdate);
+        return;
       }
+
+      // 3) Ainda não inicializou: tenta novamente
+      window.setTimeout(startTracking, 500);
     };
 
-    startWatchVideoProgress();
+    startTracking();
 
     return () => {
       disposed = true;
+      try {
+        cleanup?.();
+      } catch {
+        // ignore
+      } finally {
+        cleanup = null;
+      }
     };
   }, []);
+
 
   return (
     <main className="flex flex-col min-h-screen">
