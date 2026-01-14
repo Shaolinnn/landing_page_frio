@@ -8,7 +8,7 @@ import dynamic from 'next/dynamic';
 import Script from 'next/script';
 
 // --- CONFIGURAÇÃO PÚBLICO FRIO (REGRA DA KYRLLA) ---
-const DELAY_IN_SECONDS = 1013; // 16:53 conforme orientação da mentora [cite: 1]
+const DELAY_IN_SECONDS = 1013; // 16:53 conforme orientação da mentora
 
 // Carregamento dinâmico dos componentes pesados
 const FaqSection = dynamic(() => import('@/components/FaqSection'));
