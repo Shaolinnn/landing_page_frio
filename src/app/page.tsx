@@ -7,29 +7,6 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import Script from 'next/script';
 
-type SmartPlayerEvent = 'timeupdate';
-
-interface SmartPlayerVideo {
-  currentTime: number;
-}
-
-interface SmartPlayerInstance {
-  smartAutoPlay?: boolean;
-  video?: SmartPlayerVideo;
-  on?: (event: SmartPlayerEvent, handler: () => void) => void;
-  off?: (event: SmartPlayerEvent, handler: () => void) => void;
-}
-
-interface SmartPlayer {
-  instances: SmartPlayerInstance[];
-}
-
-declare global {
-  interface Window {
-    smartplayer?: SmartPlayer;
-  }
-}
-
 // --- CONFIGURAÇÃO PÚBLICO FRIO (REGRA DA KYRLLA) ---
 const DELAY_IN_SECONDS = 1013; // 16:53 conforme orientação da mentora
 
@@ -69,141 +46,27 @@ export default function HomePage() {
 
   const openModal = () => setIsModalOpen(true);
 
-    // Lógica de Delay para Público Frio (SINCRONIZADA COM O TEMPO DO VÍDEO)
+  // --- LÓGICA DE DELAY BLINDADA (SIMPLES E EFICAZ) ---
   useEffect(() => {
-    const PLAYER_ELEMENT_ID = 'vid-6967733435a1be1be44d18e8';
-    const STORAGE_KEY = `daq_vsl_frio_unlocked_${PLAYER_ELEMENT_ID}_${DELAY_IN_SECONDS}`;
-
-    // Se já desbloqueou antes, mostra direto (mesma regra, sem frustração no refresh)
-    try {
-      const alreadyUnlocked = localStorage.getItem(STORAGE_KEY);
-      if (alreadyUnlocked === 'true') {
-        setShowContent(true);
-        return;
-      }
-    } catch {
-      // ignore
+    // 1. Verifica se o usuário já desbloqueou essa página antes (Cookie/LocalStorage)
+    // Isso evita que, se o usuário der F5 na página, ele tenha que esperar 16min de novo.
+    const alreadyUnlocked = localStorage.getItem('daq_vsl_frio_unlocked');
+    
+    if (alreadyUnlocked === 'true') {
+      setShowContent(true);
+      return;
     }
 
-    let disposed = false;
-    let cleanup: (() => void) | null = null;
-
-    const unlock = () => {
-      if (disposed) return;
-
+    // 2. Se não desbloqueou, inicia a contagem regressiva simples
+    const timer = setTimeout(() => {
       setShowContent(true);
+      // Salva no navegador que esse usuário já cumpriu o tempo
+      localStorage.setItem('daq_vsl_frio_unlocked', 'true');
+    }, DELAY_IN_SECONDS * 1000);
 
-      try {
-        localStorage.setItem(STORAGE_KEY, 'true');
-      } catch {
-        // ignore
-      }
-
-      // Para de escutar assim que liberar
-      try {
-        cleanup?.();
-      } catch {
-        // ignore
-      } finally {
-        cleanup = null;
-      }
-    };
-
-    const getVideoEl = (): HTMLVideoElement | null => {
-      const host = document.getElementById(PLAYER_ELEMENT_ID);
-      if (!host) return null;
-
-      // VTurb é um Web Component: normalmente o <video> fica no shadowRoot
-      const shadowVideo = (host as HTMLElement & { shadowRoot?: ShadowRoot | null }).shadowRoot?.querySelector(
-        'video'
-      ) as HTMLVideoElement | null;
-      if (shadowVideo) return shadowVideo;
-
-      // Fallback (caso o <video> esteja no light DOM)
-      const lightVideo = (host as HTMLElement).querySelector('video') as HTMLVideoElement | null;
-      if (lightVideo) return lightVideo;
-
-      return null;
-    };
-
-    const getCurrentTimeFromSmartplayer = (): number | null => {
-      const sp = window.smartplayer;
-      if (!sp?.instances?.length) return null;
-
-      let maxTime: number | null = null;
-      for (const inst of sp.instances) {
-        const t = inst?.video?.currentTime;
-        if (typeof t === 'number' && !Number.isNaN(t)) {
-          if (maxTime === null || t > maxTime) maxTime = t;
-        }
-      }
-      return maxTime;
-    };
-
-    const startTracking = () => {
-      if (disposed) return;
-
-      // 1) Preferência: lê o tempo diretamente do <video> real (mais confiável que smartplayer.on)
-      const video = getVideoEl();
-      if (video) {
-        const check = () => {
-          if (disposed) return;
-          const t = video.currentTime ?? 0;
-          if (t >= DELAY_IN_SECONDS) unlock();
-        };
-
-        const onTimeUpdate = () => check();
-
-        video.addEventListener('timeupdate', onTimeUpdate);
-
-        // Fallback: alguns browsers/players podem "throttlar" o timeupdate
-        const interval = window.setInterval(check, 1000);
-
-        // Checa já (caso o vídeo já esteja tocando quando anexar)
-        check();
-
-        cleanup = () => {
-          video.removeEventListener('timeupdate', onTimeUpdate);
-          window.clearInterval(interval);
-        };
-
-        return;
-      }
-
-      // 2) Fallback: se não achou o <video>, lê pelo smartplayer (polling)
-      const spTime = getCurrentTimeFromSmartplayer();
-      if (spTime !== null) {
-        const interval = window.setInterval(() => {
-          if (disposed) return;
-          const t = getCurrentTimeFromSmartplayer() ?? 0;
-          if (t >= DELAY_IN_SECONDS) unlock();
-        }, 1000);
-
-        cleanup = () => {
-          window.clearInterval(interval);
-        };
-
-        return;
-      }
-
-      // 3) Ainda não inicializou: tenta novamente
-      window.setTimeout(startTracking, 500);
-    };
-
-    startTracking();
-
-    return () => {
-      disposed = true;
-      try {
-        cleanup?.();
-      } catch {
-        // ignore
-      } finally {
-        cleanup = null;
-      }
-    };
+    // Limpa o timer se a pessoa fechar a aba antes do tempo
+    return () => clearTimeout(timer);
   }, []);
-
 
   return (
     <main className="flex flex-col min-h-screen">
@@ -228,7 +91,7 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative max_w-5xl mx-auto px-6 flex flex-col items-center text-center">
+        <div className="relative max-w-5xl mx-auto px-6 flex flex-col items-center text-center">
           
             <span className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold text-amber-600 uppercase tracking-[0.2em] mb-6 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
               <FontAwesomeIcon icon={faFire} /> Método SPQ
@@ -249,7 +112,7 @@ export default function HomePage() {
               Assista ao vídeo abaixo e descubra como estudar sem caos, aprender de verdade e parar de repetir o mesmo ciclo todos os anos.
             </p>
             
-            {/* --- PLAYER VSL NOVO (ID PÚBLICO FRIO: 6967733435a1be1be44d18e8) --- */}
+            {/* --- PLAYER VSL (ID PÚBLICO FRIO) --- */}
             <div className="w-full max-w-[320px] sm:max-w-[380px] aspect-[9/16] bg-black rounded-2xl shadow-2xl overflow-hidden border-4 border-white mb-8 relative group mx-auto">
                 {/* @ts-expect-error - Web Component do VTurb não tipado no TS */}
                 <vturb-smartplayer
@@ -290,7 +153,7 @@ export default function HomePage() {
             SEM PDF • SEM VIDEOAULA INFINITA • SEM TEORIA QUE VOCÊ NÃO USA
           </div>
         </section>
-      </div>
+      </div>  
         
         {/* Componentes carregados abaixo da dobra */}
         <TestimonialsSection />
@@ -482,7 +345,7 @@ export default function HomePage() {
                         <div className="mb-6">
                             <p className="text-slate-400 text-sm line-through">de R$ 497,00</p>
                             <p className="text-lg text-emerald-600 font-bold">por apenas 12x de</p>
-                            <p className="text-5xl font-black text-emerald-600 tracking-tight font-sans">R$ 29,64</p>
+                            <p className="text-5xl font-black text-emerald-600 tracking-tight font-sans">R$ 30,72</p>
                             <p className="text-slate-500 text-sm mt-1">ou R$ 297 à vista</p>
                         </div>
                         
