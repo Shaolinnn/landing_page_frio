@@ -7,6 +7,29 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import Script from 'next/script';
 
+type SmartPlayerEvent = 'timeupdate';
+
+interface SmartPlayerVideo {
+  currentTime: number;
+}
+
+interface SmartPlayerInstance {
+  smartAutoPlay?: boolean;
+  video?: SmartPlayerVideo;
+  on?: (event: SmartPlayerEvent, handler: () => void) => void;
+  off?: (event: SmartPlayerEvent, handler: () => void) => void;
+}
+
+interface SmartPlayer {
+  instances: SmartPlayerInstance[];
+}
+
+declare global {
+  interface Window {
+    smartplayer?: SmartPlayer;
+  }
+}
+
 // --- CONFIGURAÇÃO PÚBLICO FRIO (REGRA DA KYRLLA) ---
 const DELAY_IN_SECONDS = 1013; // 16:53 conforme orientação da mentora
 
@@ -46,22 +69,77 @@ export default function HomePage() {
 
   const openModal = () => setIsModalOpen(true);
 
-  // Lógica de Delay para Público Frio
+  // Lógica de Delay para Público Frio (SINCRONIZADA COM O TEMPO DO VÍDEO)
   useEffect(() => {
-    // Verifica se já desbloqueou antes para não frustrar o usuário no refresh
-    const alreadyUnlocked = localStorage.getItem('daq_vsl_frio_unlocked');
-    if (alreadyUnlocked === 'true') {
-      setShowContent(true);
-      return;
+    const STORAGE_KEY = 'daq_vsl_frio_unlocked';
+
+    // Se já desbloqueou antes, mostra direto (mesma regra, sem frustração no refresh)
+    try {
+      const alreadyUnlocked = localStorage.getItem(STORAGE_KEY);
+      if (alreadyUnlocked === 'true') {
+        setShowContent(true);
+        return;
+      }
+    } catch {
+      // ignore
     }
 
-    // Inicia o timer
-    const timer = setTimeout(() => {
-      setShowContent(true);
-      localStorage.setItem('daq_vsl_frio_unlocked', 'true');
-    }, DELAY_IN_SECONDS * 1000);
+    let attempts = 0;
+    let disposed = false;
 
-    return () => clearTimeout(timer);
+    const startWatchVideoProgress = () => {
+      if (disposed) return;
+
+      const sp = window.smartplayer;
+
+      // Aguarda o player inicializar
+      if (!sp || !sp.instances || sp.instances.length === 0) {
+        if (attempts >= 90) return; // tenta por até ~90s
+        attempts += 1;
+        window.setTimeout(startWatchVideoProgress, 1000);
+        return;
+      }
+
+      const instance = sp.instances[0];
+
+      const onTimeUpdate = () => {
+        if (disposed) return;
+
+        // Evita liberar em autoplay inteligente (mantém lógica consistente com embed VTurb)
+        if (instance?.smartAutoPlay) return;
+
+        const currentTime = instance?.video?.currentTime ?? 0;
+        if (currentTime < DELAY_IN_SECONDS) return;
+
+        setShowContent(true);
+
+        try {
+          localStorage.setItem(STORAGE_KEY, 'true');
+        } catch {
+          // ignore
+        }
+
+        // Remove listener (se a lib suportar off)
+        try {
+          if (typeof instance?.off === 'function') {
+            instance.off('timeupdate', onTimeUpdate);
+          }
+        } catch {
+          // ignore
+        }
+      };
+
+      // Listener do tempo do vídeo
+      if (typeof instance?.on === 'function') {
+        instance.on('timeupdate', onTimeUpdate);
+      }
+    };
+
+    startWatchVideoProgress();
+
+    return () => {
+      disposed = true;
+    };
   }, []);
 
   return (
@@ -87,7 +165,7 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative max-w-5xl mx-auto px-6 flex flex-col items-center text-center">
+        <div className="relative max_w-5xl mx-auto px-6 flex flex-col items-center text-center">
           
             <span className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold text-amber-600 uppercase tracking-[0.2em] mb-6 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
               <FontAwesomeIcon icon={faFire} /> Método SPQ

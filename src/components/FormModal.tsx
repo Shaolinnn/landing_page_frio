@@ -37,7 +37,7 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
     setWhatsapp(v);
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setFeedback({ message: '', type: '' });
@@ -49,34 +49,14 @@ export default function FormModal({ isOpen, onClose }: FormModalProps) {
       return;
     }
     
-    // Webhook para CRM (n8n)
-    const webhookUrl = 'https://n8n.srv928140.hstgr.cloud/webhook/13c8579f-e98e-463c-839e-0795865e6dfa';
-    
-    // --- LINK DE CHECKOUT ATUALIZADO (Oferta R$ 297) ---
-    // off=apdkfkwd conforme instrução da Kyrlla
+    // --- LINK DE CHECKOUT (Oferta R$ 297) ---
     const checkoutBaseUrl = 'https://pay.hotmart.com/K70495535U?off=apdkfkwd'; 
     
     // Monta a URL final com os parâmetros para preenchimento automático (nome e email)
-    const checkoutUrl = `${checkoutBaseUrl}&checkoutMode=10&bid=1756837455546&name=${encodeURIComponent(nome)}&email=${encodeURIComponent(email)}`;
+    const checkoutUrl = `${checkoutBaseUrl}&checkoutMode=10&bid=${Date.now()}&name=${encodeURIComponent(nome)}&email=${encodeURIComponent(email)}`;
 
-    try {
-      // 1. Envia dados para o n8n (CRM/Sheets)
-      // Usamos 'no-cors' ou tratamento de erro silencioso se necessário, mas aqui tentamos o POST padrão
-      const response = await fetch(webhookUrl, {
-        method: 'POST',
-        body: JSON.stringify({ nome, email, whatsapp }),
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      // Independente do status do webhook (200 ou erro), redirecionamos o cliente para não perder a venda.
-      // O 'await' acima garante que o dado foi disparado antes de sair da página.
-      window.location.href = checkoutUrl;
-
-    } catch (error) {
-      console.error('Erro ao enviar webhook:', error);
-      // Fallback: Se der erro de rede no webhook, redireciona para o checkout imediatamente
-      window.location.href = checkoutUrl;
-    }
+    // Redirecionamento direto para a Hotmart (sem automação n8n)
+    window.location.href = checkoutUrl;
   };
 
   return (
