@@ -77,11 +77,13 @@ export default function HomePage() {
       </div>
 
       {/* --- HERO SECTION --- */}
-      <header className="relative bg-gradient-to-b from-white to-slate-50 py-12 md:py-16 overflow-hidden">
-        <div className="absolute inset-0 -z-10 select-none pointer-events-none opacity-5">
-          <Image 
+      {/* MUDANÇA: Reduzi o padding-top (pt-10 -> pt-4) para subir o conteúdo no mobile */}
+      <header className="relative bg-gradient-to-b from-white to-slate-50 pt-4 pb-20 md:pt-14 md:pb-24 overflow-visible">
+        {/* Background */}
+        <div className="absolute inset-0 -z-10 select-none opacity-5">
+           <Image 
             src="/img/background-hero-640.webp" 
-            alt="Background"
+            alt="Background Pattern"
             fill
             priority
             quality={60}
@@ -91,10 +93,6 @@ export default function HomePage() {
         </div>
 
         <div className="relative max-w-5xl mx-auto px-6 flex flex-col items-center text-center">
-          
-            <span className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold text-amber-600 uppercase tracking-[0.2em] mb-6 bg-amber-50 px-3 py-1 rounded-full border border-amber-100">
-              <FontAwesomeIcon icon={faFire} /> Método SPQ
-            </span>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight mb-6 max-w-4xl">
               Aprenda com a{' '}
@@ -247,11 +245,11 @@ export default function HomePage() {
             <ul className="space-y-3">
                 <li className="flex items-start gap-3">
                 <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-500 mt-1" />
-                <span>Método de Engenharia Reversa (Estudo por Questões)</span>
+                <span>Foco no que realmente cai na prova</span>
                 </li>
                 <li className="flex items-start gap-3">
                 <FontAwesomeIcon icon={faCheckCircle} className="text-emerald-500 mt-1" />
-                <span>Gestão baseada em dados (Planilha de Desempenho)</span>
+                <span>Adaptável à sua rotina</span>
                 </li>
             </ul>
             </div>
@@ -331,7 +329,7 @@ export default function HomePage() {
                 </span>
                 <h3 className="text-xl font-bold text-slate-800 mb-4">DAQ Essencial</h3>
                 <p className="text-slate-500 text-lg mb-1">Apenas 12x de</p>
-                <p className="text-5xl font-bold text-emerald-600 mb-4 font-poppins">R$ 29,64</p>
+                <p className="text-5xl font-bold text-emerald-600 mb-4 font-poppins">R$ 30,72</p>
                 <p className="text-slate-400 text-sm mb-6">ou R$ 297 à vista</p>
                 
                 <ul className="space-y-2 text-left text-slate-700 mb-6 text-sm bg-slate-50 p-4 rounded-lg">
