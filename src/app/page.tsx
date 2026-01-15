@@ -73,7 +73,7 @@ export default function HomePage() {
       {/* --- BANNER OFERTA --- */}
       <div className="bg-red-600 text-white py-2 px-4 text-center font-bold uppercase tracking-wider text-xs sm:text-sm shadow-md animate-pulse z-50">
         <FontAwesomeIcon icon={faClock} className="mr-2" />
-        Oferta Especial — Acesso Imediato por Tempo Limitado
+        Oferta Especial por Tempo Limitado
       </div>
 
       {/* --- HERO SECTION --- */}
