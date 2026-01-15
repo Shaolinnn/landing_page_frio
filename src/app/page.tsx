@@ -7,12 +7,12 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import Script from 'next/script';
 
-// --- CONFIGURAÇÃO PÚBLICO FRIO (REGRA DA KYRLLA) ---
-const DELAY_IN_SECONDS = 1013; // 16:53 (Pitch de Vendas)
+// --- CONFIGURAÇÃO PÚBLICO FRIO ---
+const DELAY_IN_SECONDS = 1013; // 16:53
 
-// Carregamento dinâmico dos componentes pesados
+// Carregamento dinâmico dos componentes
 const FaqSection = dynamic(() => import('@/components/FaqSection'));
-const FormModal = dynamic(() => import('@/components/FormModal'));
+// FormModal removido conforme solicitado
 const TestimonialsSection = dynamic(() => import('@/components/TestimonialsSection'));
 const VideoTestimonials = dynamic(() => import('@/components/VideoTestimonials'));
 
@@ -40,17 +40,18 @@ import {
 import { faWhatsapp, faInstagram, faYoutube } from '@fortawesome/free-brands-svg-icons';
 
 export default function HomePage() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [showContent, setShowContent] = useState(false);
 
-  const openModal = () => setIsModalOpen(true);
+  // Função de Checkout Direto (Sem Pop-up)
+  const handleCheckout = () => {
+    // Link direto com o parâmetro OFF correto
+    window.location.href = 'https://pay.hotmart.com/K70495535U?off=apdkfkwd&checkoutMode=10';
+  };
 
-  // Lógica de Delay (Versão Produção)
+  // Lógica de Delay
   useEffect(() => {
-    // Chave única de produção
     const STORAGE_KEY = 'daq_vsl_frio_prod';
     
-    // 1. Verifica se o usuário já assistiu antes (Refresh safe)
     const alreadyUnlocked = localStorage.getItem(STORAGE_KEY);
     
     if (alreadyUnlocked === 'true') {
@@ -58,10 +59,8 @@ export default function HomePage() {
       return;
     }
 
-    // 2. Inicia contagem regressiva silenciosa
     const timer = setTimeout(() => {
       setShowContent(true);
-      // Salva no navegador que o lead já cumpriu o tempo
       localStorage.setItem(STORAGE_KEY, 'true');
     }, DELAY_IN_SECONDS * 1000);
 
@@ -121,11 +120,11 @@ export default function HomePage() {
                 />
             </div>
 
-            {/* CTA DINÂMICO APÓS O PITCH NO MINUTO 16:53 */}
+            {/* CTA DINÂMICO APÓS O PITCH */}
             {showContent && (
                 <div className="animate-fade-in-up">
                     <button
-                      onClick={openModal}
+                      onClick={handleCheckout}
                       className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg shadow-emerald-500/30 transition-all transform hover:scale-105 flex items-center justify-center gap-2 text-lg"
                     >
                       <FontAwesomeIcon icon={faTrophy} />
@@ -139,7 +138,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* --- DIVISÃO COM SETA (INDICADOR DE ROLAGEM) --- */}
+      {/* --- DIVISÃO COM SETA --- */}
       <div className="relative h-4 w-full bg-slate-50 flex justify-center z-30">
         <div className="absolute -top-5 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border border-slate-100 transition-transform hover:scale-110">
           <FontAwesomeIcon icon={faChevronDown} className="text-amber-500 animate-bounce text-sm" />
@@ -342,7 +341,7 @@ export default function HomePage() {
                 </ul>
 
                 <button
-                    onClick={openModal}
+                    onClick={handleCheckout}
                     className="inline-block w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 px-6 rounded-lg shadow-lg shadow-emerald-500/20 transition-all transform hover:scale-105 text-lg"
                 >
                     <FontAwesomeIcon icon={faTrophy} className="mr-2" /> Quero meu plano de aprovação
@@ -393,7 +392,7 @@ export default function HomePage() {
                 Teste por 7 dias. Se achar que não é pra você, devolvemos 100% do valor.
             </p>
             <button
-                    onClick={openModal}
+                    onClick={handleCheckout}
                     className="inline-block bg-white text-emerald-600 border border-emerald-200 hover:bg-emerald-50 font-semibold py-2 px-6 rounded-full transition-colors"
                 >
                     Começar teste de 7 dias
@@ -419,14 +418,12 @@ export default function HomePage() {
 
       </div>
 
-      {/* Script do Player VTurb Específico - ID CORRIGIDO 'COLD' */}
+      {/* Script do Player VTurb Específico */}
       <Script
         id="vturb-player-script-cold"
         src="https://scripts.converteai.net/6386c5ef-c435-4ceb-bd05-bafd8dff4a4e/players/6967733435a1be1be44d18e8/v4/player.js"
         strategy="afterInteractive"
       />
-
-      {isModalOpen && <FormModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />}
     </main>
   );
 }
