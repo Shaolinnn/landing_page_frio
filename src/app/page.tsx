@@ -12,7 +12,6 @@ const DELAY_IN_SECONDS = 1013; // 16:53
 
 // Carregamento dinâmico dos componentes
 const FaqSection = dynamic(() => import('@/components/FaqSection'));
-// FormModal removido conforme solicitado
 const TestimonialsSection = dynamic(() => import('@/components/TestimonialsSection'));
 const VideoTestimonials = dynamic(() => import('@/components/VideoTestimonials'));
 
@@ -31,10 +30,8 @@ import {
   faTrophy,
   faShieldAlt,
   faCopyright,
-  faFire,
   faCheck,
   faUserGraduate,
-  faClock,
   faChevronDown
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp, faInstagram, faYoutube } from '@fortawesome/free-brands-svg-icons';
@@ -69,21 +66,14 @@ export default function HomePage() {
 
   return (
     <main className="flex flex-col min-h-screen font-sans">
-      
-      {/* --- BANNER OFERTA --- */}
-      <div className="bg-red-600 text-white py-2 px-4 text-center font-bold uppercase tracking-wider text-xs sm:text-sm shadow-md animate-pulse z-50">
-        <FontAwesomeIcon icon={faClock} className="mr-2" />
-        Oferta Especial por Tempo Limitado
-      </div>
 
       {/* --- HERO SECTION --- */}
-      {/* MUDANÇA: Reduzi o padding-top (pt-10 -> pt-4) para subir o conteúdo no mobile */}
-      <header className="relative bg-gradient-to-b from-white to-slate-50 pt-4 pb-20 md:pt-14 md:pb-24 overflow-visible">
-        {/* Background */}
-        <div className="absolute inset-0 -z-10 select-none opacity-5">
-           <Image 
+      {/* MUDANÇA: Ajuste de padding para centralizar o player visualmente sem o texto acima */}
+      <header className="relative bg-gradient-to-b from-white to-slate-50 pt-6 pb-12 md:pt-10 md:pb-16 overflow-hidden">
+        <div className="absolute inset-0 -z-10 select-none pointer-events-none opacity-5">
+          <Image 
             src="/img/background-hero-640.webp" 
-            alt="Background Pattern"
+            alt="Background"
             fill
             priority
             quality={60}
@@ -93,34 +83,25 @@ export default function HomePage() {
         </div>
 
         <div className="relative max-w-5xl mx-auto px-6 flex flex-col items-center text-center">
-
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 leading-tight tracking-tight mb-6 max-w-4xl">
-              Aprenda com a{' '}
-              <span className="text-amber-500 relative whitespace-nowrap">
-                prova
-                <svg className="absolute w-full h-3 -bottom-1 left-0 text-amber-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
-                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" />
-                </svg>
-              </span>
-              , na prática.
-            </h1>
-
-            <p className="text-base sm:text-lg text-slate-600 max-w-2xl leading-relaxed mb-8">
-              Assista ao vídeo abaixo e descubra como estudar sem caos, aprender de verdade e parar de repetir o mesmo ciclo todos os anos.
-            </p>
-            
+          
             {/* --- PLAYER VSL (ID PÚBLICO FRIO) --- */}
-            <div className="w-full max-w-[320px] sm:max-w-[380px] aspect-[9/16] bg-black rounded-2xl shadow-2xl overflow-hidden border-4 border-white mb-8 relative group mx-auto">
+            {/* MUDANÇA TÉCNICA: 
+                1. Removidos H1 e P conforme solicitado.
+                2. Removido 'aspect-[9/16]' e 'overflow-hidden' para permitir que a Headline 
+                   interna do VTurb apareça sem cortes.
+                3. Mantido 'max-w' para segurar o layout em telas maiores.
+            */}
+            <div className="w-full max-w-[320px] sm:max-w-[380px] bg-transparent mb-4 relative group mx-auto">
                 {/* @ts-expect-error - Web Component do VTurb não tipado no TS */}
                 <vturb-smartplayer
                   id="vid-6967733435a1be1be44d18e8"
-                  style={{ display: 'block', margin: '0 auto', width: '100%', height: '100%' }}
+                  style={{ display: 'block', margin: '0 auto', width: '100%' }}
                 />
             </div>
 
             {/* CTA DINÂMICO APÓS O PITCH */}
             {showContent && (
-                <div className="animate-fade-in-up">
+                <div className="animate-fade-in-up mt-6">
                     <button
                       onClick={handleCheckout}
                       className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg shadow-emerald-500/30 transition-all transform hover:scale-105 flex items-center justify-center gap-2 text-lg"
