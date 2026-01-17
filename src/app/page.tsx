@@ -310,7 +310,7 @@ export default function HomePage() {
                 </span>
                 <h3 className="text-xl font-bold text-slate-800 mb-4">DAQ Essencial</h3>
                 <p className="text-slate-500 text-lg mb-1">Apenas 12x de</p>
-                <p className="text-5xl font-bold text-emerald-600 mb-4 font-poppins">R$ 30,72</p>
+                <p className="text-5xl font-bold text-emerald-600 mb-4 font-poppins">R$ 32,55</p>
                 <p className="text-slate-400 text-sm mb-6">ou R$ 297 à vista</p>
                 
                 <ul className="space-y-2 text-left text-slate-700 mb-6 text-sm bg-slate-50 p-4 rounded-lg">
