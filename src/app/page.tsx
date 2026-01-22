@@ -6,15 +6,6 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import Script from 'next/script';
-
-// --- CONFIGURAÇÃO PÚBLICO FRIO ---
-const DELAY_IN_SECONDS = 1013; // 16:53
-
-// Carregamento dinâmico dos componentes
-const FaqSection = dynamic(() => import('@/components/FaqSection'));
-const TestimonialsSection = dynamic(() => import('@/components/TestimonialsSection'));
-const VideoTestimonials = dynamic(() => import('@/components/VideoTestimonials'));
-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faBolt,
@@ -35,6 +26,17 @@ import {
   faChevronDown
 } from '@fortawesome/free-solid-svg-icons';
 import { faWhatsapp, faInstagram, faYoutube } from '@fortawesome/free-brands-svg-icons';
+
+// 1. IMPORTAÇÃO DO COMPONENTE DE CONVERSÃO
+import GoogleAdsConversion from '@/components/GoogleAdsConversion';
+
+// --- CONFIGURAÇÃO PÚBLICO FRIO ---
+const DELAY_IN_SECONDS = 1013; // 16:53
+
+// Carregamento dinâmico dos componentes
+const FaqSection = dynamic(() => import('@/components/FaqSection'));
+const TestimonialsSection = dynamic(() => import('@/components/TestimonialsSection'));
+const VideoTestimonials = dynamic(() => import('@/components/VideoTestimonials'));
 
 export default function HomePage() {
   const [showContent, setShowContent] = useState(false);
@@ -67,8 +69,10 @@ export default function HomePage() {
   return (
     <main className="flex flex-col min-h-screen font-sans">
 
+      {/* 2. COMPONENTE ADICIONADO AQUI (ID ESPECÍFICO DAQ ESSENCIAL) */}
+      <GoogleAdsConversion sendTo="AW-583505601/ICbQCNfH3_waEMGtnpYC" />
+
       {/* --- HERO SECTION --- */}
-      {/* MUDANÇA: Ajuste de padding para centralizar o player visualmente sem o texto acima */}
       <header className="relative bg-gradient-to-b from-white to-slate-50 pt-6 pb-12 md:pt-10 md:pb-16 overflow-hidden">
         <div className="absolute inset-0 -z-10 select-none pointer-events-none opacity-5">
           <Image 
@@ -85,12 +89,6 @@ export default function HomePage() {
         <div className="relative max-w-5xl mx-auto px-6 flex flex-col items-center text-center">
           
             {/* --- PLAYER VSL (ID PÚBLICO FRIO) --- */}
-            {/* MUDANÇA TÉCNICA: 
-                1. Removidos H1 e P conforme solicitado.
-                2. Removido 'aspect-[9/16]' e 'overflow-hidden' para permitir que a Headline 
-                   interna do VTurb apareça sem cortes.
-                3. Mantido 'max-w' para segurar o layout em telas maiores.
-            */}
             <div className="w-full max-w-[320px] sm:max-w-[380px] bg-transparent mb-4 relative group mx-auto">
                 {/* @ts-expect-error - Web Component do VTurb não tipado no TS */}
                 <vturb-smartplayer
